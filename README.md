@@ -38,14 +38,15 @@ Download both the gpi_osc.py and web_config.py files onto your RasPi. Now run bo
 > 
 Visit the webpage under *hostname*.local:8000 (for our example TallyGPI.local:8000) and put in your server IP, port and also change your GPI pins[^1].
 <br/>
+<img src="https://imgur.com/IgA2iFF.png" alt="Add Source" style="width:40%; height:auto;">
+<br/>
 [^1]: Optionally you can use the gpi_osc.py standalone and change the config.ini locally on your RasPi
-*image_placeholder*
 <br/>
 <br/>
 
 ***Basic config - Tally Arbiter***
 <br/>
-In order for the server to correctly receive the OSC messages you need to configure a proper source device.
+In order for the server to correctly receive the OSC messages you need to configure a proper source device inside TallyArbiter.
 <br/>
 <br/>
 
