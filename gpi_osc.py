@@ -1,7 +1,7 @@
 import os
-import socket
 import signal
 from configparser import ConfigParser
+from pythonosc.udp_client import SimpleUDPClient as UDPClient
 from gpiozero import Button
 
 #Checks for valid config file
@@ -31,21 +31,30 @@ PGM8 = int(Config['Config']['PGM8_pin'])
 PGM9 = int(Config['Config']['PGM9_pin'])
 PGM10 = int(Config['Config']['PGM10_pin'])
 
-server_address = (ip, port)
-UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
+client = UDPClient(ip, port)
 print(f"UDPClient will connect to |IP: {ip}| |Port: {port}|")
 
-#Setup GPIO pins
-pgm1 = Button(PGM1)
-pgm2 = Button(PGM2)
-pgm3 = Button(PGM3)
-pgm4 = Button(PGM4)
-pgm5 = Button(PGM5)
-pgm6 = Button(PGM6)
-pgm7 = Button(PGM7)
-pgm8 = Button(PGM8)
-pgm9 = Button(PGM9)
-pgm10 = Button(PGM10)
+#Setup GPIO pins if they're defined
+if PGM1 != 0:
+    pgm1 = Button(PGM1)
+if PGM2 != 0:
+    pgm2 = Button(PGM2)
+if PGM3 != 0:
+    pgm3 = Button(PGM3)
+if PGM4 != 0:
+    pgm4 = Button(PGM4)
+if PGM5 != 0:
+    pgm5 = Button(PGM5)
+if PGM6 != 0:
+    pgm6 = Button(PGM6)
+if PGM7 != 0:
+    pgm7 = Button(PGM7)
+if PGM8 != 0:
+    pgm8 = Button(PGM8)
+if PGM9 != 0:
+    pgm9 = Button(PGM9)
+if PGM10 != 0:
+    pgm10 = Button(PGM10)
 
 
 #Encodes tally data as OSC Protocol
@@ -58,27 +67,25 @@ def osc_builder(address: int, state: str):
         tally = "/tally/program_off"
     else:
         tally = "/tally/previewprogram_off"
-    #Encodes the message into byte data for the OSC Protocol
-    packet = f"{tally} + \\x00\\x00\\x00,i\\x00\\x00\\x00\\x00\\x00\\x0 + {address}"
     if log == "1":
-        print(f"Commando for Tally Arbiter | Address:{address} & Msg: {tally}")
-    return packet
+        print(f"Commando for Tally Arbiter | Address: {address} & Msg: {tally}")
+    client.send_message(tally, address)
 
 
 def pgm_onadd(x):
     def PGM_on(pin = x):
-        osc_msg = osc_builder(pin, "PGM_on")
-        UDPServerSocket.sendto(osc_msg.encode(), server_address)
+        osc_builder(pin, "PGM_on")
         if log == "1":
-            print(f"OSC message sent to |IP:{ip} & Port: {port}")
+            print(f"OSC message sent to |IP: {ip} & Port: {port}|")
+            print("________________________________________\n")
     return PGM_on
 
 def pgm_offadd(x):
     def PGM_off(pin = x):
-        osc_msg = osc_builder(pin, "PGM_off")
-        UDPServerSocket.sendto(osc_msg.encode(), server_address)
+        osc_builder(pin, "PGM_off")
         if log == "1":
-            print(f"OSC message sent to |IP:{ip} & Port: {port}")
+            print(f"OSC message sent to |IP: {ip} & Port: {port}|")
+            print("________________________________________\n")
     return PGM_off
 
 

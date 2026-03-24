@@ -13,8 +13,7 @@ if os.path.isfile("config.ini"):
 else:
     with open("config.ini", "w", encoding="utf-8") as f:
         print("Config file not found. Creating standard config")
-        f.write(f"""[Config]\nlog = 0\nip = 192.168.0.2\nport = 8500\nPGM1_pin = 26\nPGM2_pin = 19\nPGM3_pin = 16\n
-        PGM4_pin = 20\nPGM5_pin = 0\nPGM6_pin = 0\nPGM7_pin = 0\nPGM8_pin = 0\nPGM9_pin = 0\nPGM10_pin = 0""")
+        f.write(f"""[Config]\nlog = 0\nip = 192.168.0.2\nport = 8500\nPGM1_pin = 26\nPGM2_pin = 19\nPGM3_pin = 16\nPGM4_pin = 20\nPGM5_pin = 0\nPGM6_pin = 0\nPGM7_pin = 0\nPGM8_pin = 0\nPGM9_pin = 0\nPGM10_pin = 0""")
         print(f"Config file created at: \"{os.path.abspath('config.ini')}\"")
 
 #Import and read the config file
@@ -59,12 +58,13 @@ class LocalFormHandler(BaseHTTPRequestHandler):
       self.end_headers()
       #HTML hardcoded for now instead of premade files
       page_content = f"""<html><body style='font-family:Arial; background:#f2f2f2; color:#333;'>
-      <h2 style='color:#2c3e50;'>Config</h2>
+      <h2 style='color:#2c3e50;'>TallyGPI Config</h2>
       <form method='POST' style='margin-top:20px;'>
       <h3 style='color:#2c3150;'>Basic Configuration:</h3>
-      Tallyserver-IP: <input name='ip' type='text' placeholder='{ipc}' value='{ipc}' required style='padding:5px;'><br><br>
-      Tallyserver-Port: <input name='port' type='number' placeholder='{portc}' value='{portc}' required min='1' max='99999' style='padding:5px;'><br><br>
+      TallyArbiter-IP: <input name='ip' type='text' placeholder='{ipc}' value='{ipc}' required style='padding:5px;'><br><br>
+      TallyArbiter-Port: <input name='port' type='number' placeholder='{portc}' value='{portc}' required min='1' max='99999' style='padding:5px;'><br><br>
       <h3 style='color:#2c3150;'>GPI pin assignment:</h3>
+      <a href="https://raspberrypi.stackexchange.com/questions/12966/what-is-the-difference-between-board-and-bcm-for-gpio-pin-numbering" target="_blank" rel="noopener noreferrer">Beware of the board numbering vs BCM numbering scheme!</a><br><br>
       PGM1: <input name='PGM1' type='number' placeholder='{PGM1c}' value='{PGM1c}' required min='0' max='30' style='padding:5px;'><br><br>
       PGM2: <input name='PGM2' type='number' placeholder='{PGM2c}' value='{PGM2c}' required min='0' max='30' style='padding:5px;'><br><br>
       PGM3: <input name='PGM3' type='number' placeholder='{PGM3c}' value='{PGM3c}' required min='0' max='30' style='padding:5px;'><br><br>
@@ -109,7 +109,7 @@ class LocalFormHandler(BaseHTTPRequestHandler):
       #Check if anything on the config was changed and if yes write to file + restart
       if content_length != 33:
          with open("config.ini", "w", encoding="utf-8") as f:
-            f.write(f"""[Config]\nlog = {log}\nip = {ip}\nport = {port}\nPGM1_pin = {PGM1}\nPGM2_pin = {PGM2}\nPGM3_pin = {PGM3}\nPGM4_pin = {PGM4}\nPGM5_pin = {PGM5}\nPGM6_pin = {PGM6}\nPGM7_pin = {PGM7}\nPGM7_pin = {PGM7}\nPGM7_pin = {PGM7}\nPGM8_pin = {PGM8}\nPGM9_pin = {PGM9}\nPGM10_pin = {PGM10}""")
+            f.write(f"""[Config]\nlog = {log}\nip = {ip}\nport = {port}\nPGM1_pin = {PGM1}\nPGM2_pin = {PGM2}\nPGM3_pin = {PGM3}\nPGM4_pin = {PGM4}\nPGM5_pin = {PGM5}\nPGM6_pin = {PGM6}\nPGM7_pin = {PGM7}\nPGM8_pin = {PGM8}\nPGM9_pin = {PGM9}\nPGM10_pin = {PGM10}""")
          self.wfile.write(b"""<html><body style='font-family:Arial; background:#f2f2f2; color:#333;'>
          <h2 style='color:#2c3e50;'>Config</h2><h3 style='color:green;'>Config saved! RasPi will restart automatically in 10sec.</h3></body></html>""")
          time.sleep(10)
