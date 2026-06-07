@@ -11,10 +11,15 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 if os.path.isfile("config.ini"):
     print(f"Found valid config at: \"{os.path.abspath('config.ini')}\"")
 else:
-    with open("config.ini", "w", encoding="utf-8") as f:
-        print("Config file not found. Creating standard config")
-        f.write(f"""[Config]\nlog = 0\nip = 192.168.0.2\nport = 8500\nPGM1_pin = 26\nPGM2_pin = 19\nPGM3_pin = 16\nPGM4_pin = 20\nPGM5_pin = 0\nPGM6_pin = 0\nPGM7_pin = 0\nPGM8_pin = 0\nPGM9_pin = 0\nPGM10_pin = 0""")
-        print(f"Config file created at: \"{os.path.abspath('config.ini')}\"")
+    config_override = ConfigParser()
+    config_override['Config'] = {'log': '0', 'ip': '192.168.0.2', 'port': 8500, 'bounce': 0, 'PGM1_pin': 26,
+                                 'PGM2_pin': 19, 'PGM3_pin': 16,
+                                 'PGM4_pin': 20, 'PGM5_pin': 0, 'PGM6_pin': 0, 'PGM7_pin': 0, 'PGM8_pin': 0,
+                                 'PGM9_pin': 0, 'PGM10_pin': 0}
+    with open("config.ini", "w", encoding="utf-8") as configfile:
+       print("Config file not found. Creating standard config")
+       config_override.write(configfile)
+       print(f"Config file created at: \"{os.path.abspath('config.ini')}\"")
 
 #Import and read the config file
 Config = ConfigParser()
@@ -22,6 +27,7 @@ Config.read("config.ini")
 logc = Config['Config']['log']
 ipc = Config['Config']['ip']
 portc = int(Config['Config']['port'])
+bouncec = Config.getfloat('Config', 'bounce')
 PGM1c = int(Config['Config']['PGM1_pin'])
 PGM2c = int(Config['Config']['PGM2_pin'])
 PGM3c = int(Config['Config']['PGM3_pin'])
@@ -51,7 +57,7 @@ def restart():
 
 
 #Handles the webserver requests
-class LocalFormHandler(BaseHTTPRequestHandler):
+class WebConfig(BaseHTTPRequestHandler):
    def do_GET(self):
       self.send_response(200)
       self.send_header("Content-type", "text/html")
@@ -63,6 +69,7 @@ class LocalFormHandler(BaseHTTPRequestHandler):
       <h3 style='color:#2c3150;'>Basic Configuration:</h3>
       TallyArbiter-IP: <input name='ip' type='text' placeholder='{ipc}' value='{ipc}' required style='padding:5px;'><br><br>
       TallyArbiter-Port: <input name='port' type='number' placeholder='{portc}' value='{portc}' required min='1' max='99999' style='padding:5px;'><br><br>
+      Bounce-Time of GPI Pins (0.1=100ms): <input name='bounce' type='number' placeholder='{bouncec}' value='{bouncec}' step='0.01' required min='0' max='10' style='padding:5px;'><br><br>
       <h3 style='color:#2c3150;'>GPI pin assignment:</h3>
       <a href="https://raspberrypi.stackexchange.com/questions/12966/what-is-the-difference-between-board-and-bcm-for-gpio-pin-numbering" target="_blank" rel="noopener noreferrer">Beware of the board numbering vs BCM numbering scheme!</a><br><br>
       PGM1: <input name='PGM1' type='number' placeholder='{PGM1c}' value='{PGM1c}' required min='0' max='30' style='padding:5px;'><br><br>
@@ -92,6 +99,7 @@ class LocalFormHandler(BaseHTTPRequestHandler):
       log = fields.get("log", [""])[0]
       ip = fields.get("ip", [""])[0]
       port = fields.get("port", [""])[0]
+      bounce = fields.get("bounce", [""])[0]
       PGM1 = fields.get("PGM1", [""])[0]
       PGM2 = fields.get("PGM2", [""])[0]
       PGM3 = fields.get("PGM3", [""])[0]
@@ -108,8 +116,14 @@ class LocalFormHandler(BaseHTTPRequestHandler):
 
       #Check if anything on the config was changed and if yes write to file + restart
       if content_length != 33:
-         with open("config.ini", "w", encoding="utf-8") as f:
-            f.write(f"""[Config]\nlog = {log}\nip = {ip}\nport = {port}\nPGM1_pin = {PGM1}\nPGM2_pin = {PGM2}\nPGM3_pin = {PGM3}\nPGM4_pin = {PGM4}\nPGM5_pin = {PGM5}\nPGM6_pin = {PGM6}\nPGM7_pin = {PGM7}\nPGM8_pin = {PGM8}\nPGM9_pin = {PGM9}\nPGM10_pin = {PGM10}""")
+         config_new = ConfigParser()
+         config_new['Config'] = {'log': log, 'ip': ip, 'port': port, 'bounce': bounce, 'PGM1_pin': PGM1,
+                                      'PGM2_pin': PGM2, 'PGM3_pin': PGM3,
+                                      'PGM4_pin': PGM4, 'PGM5_pin': PGM5, 'PGM6_pin': PGM6, 'PGM7_pin': PGM7, 'PGM8_pin': PGM8,
+                                      'PGM9_pin': PGM9, 'PGM10_pin': PGM10}
+         with open("config.ini", "w", encoding="utf-8") as configfile:
+            print("Config file not found. Creating standard config")
+            config_new.write(configfile)
          self.wfile.write(b"""<html><body style='font-family:Arial; background:#f2f2f2; color:#333;'>
          <h2 style='color:#2c3e50;'>Config</h2><h3 style='color:green;'>Config saved! RasPi will restart automatically in 10sec.</h3></body></html>""")
          time.sleep(10)
@@ -122,6 +136,7 @@ class LocalFormHandler(BaseHTTPRequestHandler):
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 s.connect(("8.8.8.8", 80))
 ip = s.getsockname()[0]
+print(ip)
 s.close()
-server = HTTPServer((ip, 8000), LocalFormHandler)
+server = HTTPServer((ip, 8000), WebConfig)
 server.serve_forever()
